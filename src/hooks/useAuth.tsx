@@ -33,7 +33,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in on mount
     checkUser();
   }, []);
 
@@ -41,7 +40,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        // Get admin user details
         const { data: adminUser } = await supabase
           .from('admin_users')
           .select('*')
@@ -65,7 +63,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string) => {
     try {
-      // First check if admin user exists
+      // First, check if an admin user with the provided email exists.
       const { data: adminUser, error: adminError } = await supabase
         .from('admin_users')
         .select('*')
@@ -76,20 +74,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error('Invalid credentials');
       }
 
-      // For demo purposes, we'll use a simple password check
-      // In production, you'd use proper password hashing
-      if (password !== 'admin') {
-        throw new Error('Invalid credentials');
-      }
+      // This is the key change for your demo. It bypasses the password check,
+      // allowing you to log in as long as the email exists in the database.
+      // Remember to replace this with a proper password hashing check later.
+      
+      // The original password check has been commented out to allow any password.
+      // if (password !== 'admin') {
+      //   throw new Error('Invalid credentials');
+      // }
 
-      // Create a session (in production, use proper auth)
+      // Set the user state to simulate a successful login.
       setUser({
         id: adminUser.id,
         email: adminUser.email,
         role: adminUser.role
       });
 
-      // Update last login
+      // Update the last login timestamp for the user.
       await supabase
         .from('admin_users')
         .update({ last_login: new Date().toISOString() })
