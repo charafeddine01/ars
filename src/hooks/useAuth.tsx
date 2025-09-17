@@ -78,7 +78,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // For demo purposes, we'll use a simple password check
       // In production, you'd use proper password hashing
-      if (password !== 'admin123') {
+      if (password !== 'admin@admin') {
         throw new Error('Invalid credentials');
       }
 
