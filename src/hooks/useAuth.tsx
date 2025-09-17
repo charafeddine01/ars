@@ -1,19 +1,38 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from './AuthProvider'; // Adjust the import path as needed
 
-function LoginButton() {
+function LoginForm() {
   const { login } = useAuth();
-
-  const handleLogin = () => {
-    // You would get the email and password from your form inputs here
-    const email = 'your-email@example.com'; 
-    const password = 'your-password';
+  // State variables to hold the user's input
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  
+  // This function is called when the form is submitted
+  const handleSubmit = (event) => {
+    event.preventDefault(); // Prevents the page from reloading
+    // Pass the state variables to the login function
     login(email, password);
   };
 
   return (
-    <button onClick={handleLogin}>
-      Sign In
-    </button>
+    <form onSubmit={handleSubmit}>
+      <input
+        type="email"
+        value={email} // The value of the input is controlled by the state
+        onChange={(e) => setEmail(e.target.value)} // Update state on every change
+        placeholder="Email"
+      />
+      <input
+        type="password"
+        value={password} // The value of the input is controlled by the state
+        onChange={(e) => setPassword(e.target.value)} // Update state on every change
+        placeholder="Password"
+      />
+      <button type="submit">
+        Sign In
+      </button>
+    </form>
   );
 }
+
+export default LoginForm;
