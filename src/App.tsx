@@ -2,12 +2,18 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
+import { AuthProvider } from './hooks/useAuth';
 import Layout from './components/Layout/Layout';
+import AdminLayout from './components/Admin/AdminLayout';
+import ProtectedRoute from './components/Admin/ProtectedRoute';
 import Home from './pages/Home';
 import Catalog from './pages/Catalog';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import NotFound from './pages/NotFound';
+import AdminLogin from './pages/Admin/Login';
+import AdminDashboard from './pages/Admin/Dashboard';
+import ProductManagement from './pages/Admin/ProductManagement';
 
 function App() {
   useEffect(() => {
@@ -34,17 +40,35 @@ function App() {
 }, []);
   return (
     <HelmetProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Home />} />
-            <Route path="catalog" element={<Catalog />} />
-            <Route path="about" element={<About />} />
-            <Route path="contact" element={<Contact />} />
+      <AuthProvider>
+        <Router>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Home />} />
+              <Route path="catalog" element={<Catalog />} />
+              <Route path="about" element={<About />} />
+              <Route path="contact" element={<Contact />} />
+            </Route>
+            
+            {/* Admin Routes */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin" element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<AdminDashboard />} />
+              <Route path="products" element={<ProductManagement />} />
+              <Route path="content" element={<div>Content Management (Coming Soon)</div>} />
+              <Route path="settings" element={<div>Settings (Coming Soon)</div>} />
+            </Route>
+            
+            {/* 404 */}
             <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
-      </Router>
+          </Routes>
+        </Router>
+      </AuthProvider>
     </HelmetProvider>
   );
 }
