@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+// Supabase is no longer needed for login since we're bypassing the DB
 import { supabase } from '../lib/supabase';
 
 interface User {
@@ -32,78 +33,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // We are skipping the database check and assuming no user on mount
   useEffect(() => {
-    checkUser();
+    setLoading(false);
   }, []);
-
-  const checkUser = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const { data: adminUser } = await supabase
-          .from('admin_users')
-          .select('*')
-          .eq('email', session.user.email)
-          .single();
-
-        if (adminUser) {
-          setUser({
-            id: adminUser.id,
-            email: adminUser.email,
-            role: adminUser.role
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error checking user:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const login = async (email: string, password: string) => {
     try {
-      // First, check if an admin user with the provided email exists.
-      const { data: adminUser, error: adminError } = await supabase
-        .from('admin_users')
-        .select('*')
-        .eq('email', email)
-        .single();
+      // 🔴 Bypassing all database connections and logic for demo purposes.
+      // This hardcodes a 'logged-in' state with a dummy user.
+      const dummyUser: User = {
+        id: 'demo-user-1234',
+        email: email, // Use the email provided by the user
+        role: 'admin' // Hardcode the role to 'admin'
+      };
 
-      if (adminError || !adminUser) {
-        throw new Error('Invalid credentials');
-      }
+      // Simulate a successful login by setting the dummy user.
+      setUser(dummyUser);
 
-      // This is the key change for your demo. It bypasses the password check,
-      // allowing you to log in as long as the email exists in the database.
-      // Remember to replace this with a proper password hashing check later.
-      
-      // The original password check has been commented out to allow any password.
-      // if (password !== 'admin') {
-      //   throw new Error('Invalid credentials');
-      // }
-
-      // Set the user state to simulate a successful login.
-      setUser({
-        id: adminUser.id,
-        email: adminUser.email,
-        role: adminUser.role
-      });
-
-      // Update the last login timestamp for the user.
-      await supabase
-        .from('admin_users')
-        .update({ last_login: new Date().toISOString() })
-        .eq('id', adminUser.id);
-
+      // No database calls are made here.
+      // The update to 'last_login' has been removed.
     } catch (error) {
+      // Since there are no DB calls, this catch block is unlikely to be triggered.
       throw error;
     }
   };
 
   const logout = async () => {
+    // Clear the user state to simulate logging out.
     setUser(null);
-    await supabase.auth.signOut();
+    // The Supabase logout call is removed as we're not using it.
+    // await supabase.auth.signOut();
   };
 
   const value = {
