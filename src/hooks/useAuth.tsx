@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
+import { comparePassword } from '../utils/auth';
 
 interface User {
   id: string;
@@ -71,9 +72,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error('Account is deactivated');
       }
 
-      // For demo purposes, we'll use a simple password check against the stored hash
-      // In production, you'd use proper password hashing comparison
-      const isValidPassword = adminUser.password_hash === password || password === 'admin';
+      // Use bcrypt to compare the password with the stored hash
+      const isValidPassword = await comparePassword(password, adminUser.password_hash);
       
       if (!isValidPassword) {
         throw new Error('Invalid credentials');
