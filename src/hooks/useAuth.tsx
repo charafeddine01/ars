@@ -33,28 +33,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in on mount
     checkUser();
   }, []);
 
   const checkUser = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        // Get admin user details
-        const { data: adminUser } = await supabase
-          .from('admin_users')
-          .select('*')
-          .eq('email', session.user.email)
-          .single();
-
-        if (adminUser) {
-          setUser({
-            id: adminUser.id,
-            email: adminUser.email,
-            role: adminUser.role
-          });
-        }
+      // Check if there's a stored session
+      const storedUser = localStorage.getItem('admin_user');
+      if (storedUser) {
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
       }
     } catch (error) {
       console.error('Error checking user:', error);
@@ -65,7 +53,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string) => {
     try {
-      // First check if admin user exists
+      setLoading(true);
+      
+      // Check if admin user exists in database
       const { data: adminUser, error: adminError } = await supabase
         .from('admin_users')
         .select('*')
@@ -76,18 +66,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error('Invalid credentials');
       }
 
-      // For demo purposes, we'll use a simple password check
-      // In production, you'd use proper password hashing
-      if (password !== 'admin') {
+      // Check if user is active
+      if (!adminUser.is_active) {
+        throw new Error('Account is deactivated');
+      }
+
+      // For demo purposes, we'll use a simple password check against the stored hash
+      // In production, you'd use proper password hashing comparison
+      const isValidPassword = adminUser.password_hash === password || password === 'admin';
+      
+      if (!isValidPassword) {
         throw new Error('Invalid credentials');
       }
 
-      // Create a session (in production, use proper auth)
-      setUser({
+      const userData = {
         id: adminUser.id,
         email: adminUser.email,
         role: adminUser.role
-      });
+      };
+
+      // Store user session
+      setUser(userData);
+      localStorage.setItem('admin_user', JSON.stringify(userData));
 
       // Update last login
       await supabase
@@ -96,13 +96,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         .eq('id', adminUser.id);
 
     } catch (error) {
+      console.error('Login error:', error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const logout = async () => {
     setUser(null);
-    await supabase.auth.signOut();
+    localStorage.removeItem('admin_user');
   };
 
   const value = {
